@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"fmt"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -46,5 +47,39 @@ func TestCafeWhenOk(t *testing.T) {
 		handler.ServeHTTP(response, req)
 
 		assert.Equal(t, http.StatusOK, response.Code)
+	}
+}
+
+func TestCafeCount(t *testing.T) {
+	city := "moscow"
+	handler := http.HandlerFunc(mainHandle)
+	requests := []struct {
+        count int 
+        want  int 
+    }{
+       {count: 0, want: 0},
+	   {count: 1, want: 1},
+	   {count: 2, want: 2},
+	   {count: 100, want: len(cafeList[city])},
+    }
+
+	for _, v := range requests {
+		response := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", fmt.Sprintf("/cafe?city=%s&count=%d", city, v.count), nil)
+
+		handler.ServeHTTP(response, req)
+
+		var responseCity []string
+
+		cityRes := response.Body.String()
+
+		if cityRes == "" {
+			responseCity = []string{}
+		} else {
+			responseCity = strings.Split(cityRes, ",")
+		}
+ 
+		fmt.Println(responseCity, len(responseCity), v.want)
+		assert.Equal(t, len(responseCity), v.want)
 	}
 }
